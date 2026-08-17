@@ -5,24 +5,21 @@ import {
     timingSafeEqual,
 } from "node:crypto"
 import { z } from "zod"
-import type { AuthUser } from "@board-games/contracts"
+import { authorizationRoleSchema, type AuthUser } from "@board-games/contracts"
 
 const accessTokenLifetimeSeconds = 60
 
 const accessClaimsSchema = z.object({
     sub: z.string().uuid(),
     displayName: z.string(),
-    roles: z.array(z.enum(["player", "administrator"])),
+    roles: z.array(authorizationRoleSchema),
     exp: z.number().int(),
 })
 
 function getSecret(): string {
     const secret = process.env.ACCESS_TOKEN_SECRET?.trim()
 
-    if (
-        !secret ||
-        secret.length < 32
-    ) {
+    if (!secret || secret.length < 32) {
         throw new Error(
             "ACCESS_TOKEN_SECRET must contain at least 32 characters",
         )

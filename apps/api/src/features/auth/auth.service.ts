@@ -1,4 +1,4 @@
-import type { AuthUser } from "@board-games/contracts"
+import { authorizationRoles, type AuthUser } from "@board-games/contracts"
 import { db, schema } from "@board-games/db"
 import { and, eq, lte, ne, sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
@@ -10,7 +10,7 @@ import {
     hashRefreshToken,
 } from "./token.js"
 
-const refreshTokenLifetimeMs = 30 * 24 * 60 * 60 * 1000     // 30 days
+const refreshTokenLifetimeMs = 30 * 24 * 60 * 60 * 1000 // 30 days
 
 type CredentialsInput = {
     displayName: string
@@ -72,7 +72,12 @@ export async function getAuthStatus(): Promise<{ setupRequired: boolean }> {
     const [administrator] = await db
         .select({ userId: schema.userAuthorizations.userId })
         .from(schema.userAuthorizations)
-        .where(eq(schema.userAuthorizations.role, "administrator"))
+        .where(
+            eq(
+                schema.userAuthorizations.role,
+                authorizationRoles.administrator,
+            ),
+        )
         .limit(1)
 
     return { setupRequired: !administrator }
@@ -91,7 +96,12 @@ export async function setupBootstrapAdministrator(
         const [administrator] = await tx
             .select({ userId: schema.userAuthorizations.userId })
             .from(schema.userAuthorizations)
-            .where(eq(schema.userAuthorizations.role, "administrator"))
+            .where(
+                eq(
+                    schema.userAuthorizations.role,
+                    authorizationRoles.administrator,
+                ),
+            )
             .limit(1)
 
         if (administrator) {
@@ -117,7 +127,7 @@ export async function setupBootstrapAdministrator(
         })
         await tx.insert(schema.userAuthorizations).values({
             userId: createdUser.id,
-            role: "administrator",
+            role: authorizationRoles.administrator,
         })
         await tx.insert(schema.bootstrapAdministrators).values({
             userId: createdUser.id,
@@ -125,7 +135,7 @@ export async function setupBootstrapAdministrator(
 
         const user: AuthUser = {
             ...createdUser,
-            roles: ["administrator"],
+            roles: [authorizationRoles.administrator],
         }
 
         await tx
@@ -188,7 +198,10 @@ export async function login(
                 .from(schema.userAuthorizations)
                 .where(
                     and(
-                        eq(schema.userAuthorizations.role, "administrator"),
+                        eq(
+                            schema.userAuthorizations.role,
+                            authorizationRoles.administrator,
+                        ),
                         ne(schema.userAuthorizations.userId, credential.userId),
                     ),
                 )

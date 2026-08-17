@@ -1,3 +1,4 @@
+import { authorizationRoles } from "@board-games/contracts"
 import {
     boolean,
     check,
@@ -13,8 +14,8 @@ import {
 import { sql } from "drizzle-orm"
 
 export const authorizationRole = pgEnum("authorization_role", [
-    "player",
-    "administrator",
+    authorizationRoles.player,
+    authorizationRoles.administrator,
 ])
 
 export const users = pgTable("users", {

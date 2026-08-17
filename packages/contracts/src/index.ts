@@ -15,7 +15,15 @@ export const healthResponseSchema = z.object({
     timestamp: z.string().datetime(),
 })
 
-export const authorizationRoleSchema = z.enum(["player", "administrator"])
+export const authorizationRoles = {
+    player: "player",
+    administrator: "administrator",
+} as const
+
+export const authorizationRoleSchema = z.enum([
+    authorizationRoles.player,
+    authorizationRoles.administrator,
+])
 
 export const authUserSchema = z.object({
     id: z.string().uuid(),

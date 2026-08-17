@@ -1,4 +1,7 @@
-import type { AuthorizationRole } from "@board-games/contracts"
+import {
+    authorizationRoles,
+    type AuthorizationRole,
+} from "@board-games/contracts"
 import { db, schema } from "@board-games/db"
 import { eq } from "drizzle-orm"
 import { sql } from "drizzle-orm"
@@ -8,7 +11,7 @@ export async function grantAuthorization(
     role: AuthorizationRole,
 ): Promise<void> {
     await db.transaction(async (tx) => {
-        if (role === "administrator") {
+        if (role === authorizationRoles.administrator) {
             await tx.execute(sql`select pg_advisory_xact_lock(824761923)`)
         }
 
@@ -17,7 +20,7 @@ export async function grantAuthorization(
             .values({ userId, role })
             .onConflictDoNothing()
 
-        if (role !== "administrator") return
+        if (role !== authorizationRoles.administrator) return
 
         const [bootstrap] = await tx
             .select({ userId: schema.bootstrapAdministrators.userId })
