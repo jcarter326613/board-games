@@ -1,11 +1,11 @@
-import { Server, Socket } from "socket.io";
+import { Server, Socket } from "socket.io"
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
-    console.log(`Client connected: ${socket.id}`);
+    console.log(`Client connected: ${socket.id}`)
 
     socket.on("disconnect", () => {
-      console.log(`Client disconnected: ${socket.id}`);
-    });
-  });
+      console.log(`Client disconnected: ${socket.id}`)
+    })
+  })
 }
