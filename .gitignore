@@ -5,4 +5,3 @@ dist
 .DS_Store
 .vite
 coverage
-packages/db/src/migrations/meta

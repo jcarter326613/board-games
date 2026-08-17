@@ -1,28 +1,25 @@
-import "dotenv/config"
-import express from "express"
-import cors from "cors"
-import { createServer } from "http"
+import "./load-env.js"
+import { createServer } from "node:http"
 import { Server } from "socket.io"
-import { healthRouter } from "./routes/health.js"
+import { createApp } from "./app.js"
+import { logger } from "./lib/logger.js"
 import { setupSocket } from "./socket/index.js"
 
-const app = express()
+const app = createApp()
 const server = createServer(app)
+const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:5173"
 const io = new Server(server, {
     cors: {
-        origin: process.env.WEB_ORIGIN || "http://localhost:5173",
+        origin: webOrigin,
         methods: ["GET", "POST"],
+        credentials: true,
     },
 })
-
-app.use(cors())
-app.use(express.json())
-app.use("/api", healthRouter)
 
 setupSocket(io)
 
 const port = Number(process.env.API_PORT) || 3001
 
 server.listen(port, () => {
-    console.log(`API server running on http://localhost:${port}`)
+    logger.info({ port }, "API server running")
 })

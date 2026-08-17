@@ -1,11 +1,14 @@
-import { Server, Socket } from "socket.io"
+import type { Server, Socket } from "socket.io"
+import { registerGameSocketHandlers } from "../features/games/game.socket.js"
+import { logger } from "../lib/logger.js"
 
 export function setupSocket(io: Server) {
     io.on("connection", (socket: Socket) => {
-        console.log(`Client connected: ${socket.id}`)
+        logger.info({ socketId: socket.id }, "Client connected")
+        registerGameSocketHandlers(socket)
 
         socket.on("disconnect", () => {
-            console.log(`Client disconnected: ${socket.id}`)
+            logger.info({ socketId: socket.id }, "Client disconnected")
         })
     })
 }

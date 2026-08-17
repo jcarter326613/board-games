@@ -6,7 +6,7 @@
         "dev:web": "pnpm --filter @board-games/web dev",
         "dev:all": "pnpm run --parallel dev dev:web",
         "build": "pnpm -r build",
-        "lint": "eslint 'apps/**/src/**/*.ts' 'packages/**/src/**/*.ts'",
+        "lint": "eslint \"apps/**/*.{ts,tsx}\" \"packages/**/*.ts\"",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "db:generate": "pnpm --filter @board-games/db generate",
