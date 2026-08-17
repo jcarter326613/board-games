@@ -8,6 +8,27 @@
             "when": 1786982934075,
             "tag": "0000_lonely_morg",
             "breakpoints": true
+        },
+        {
+            "idx": 1,
+            "version": "7",
+            "when": 1786987923411,
+            "tag": "0001_brainy_george_stacy",
+            "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1786987938242,
+            "tag": "0002_spooky_hulk",
+            "breakpoints": true
+        },
+        {
+            "idx": 3,
+            "version": "7",
+            "when": 1786988499741,
+            "tag": "0003_fancy_thaddeus_ross",
+            "breakpoints": true
         }
     ]
 }

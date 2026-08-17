@@ -1,0 +1,1 @@
+ALTER TABLE "bootstrap_administrators" ADD CONSTRAINT "bootstrap_administrators_singleton_check" CHECK ("bootstrap_administrators"."singleton");
