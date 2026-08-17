@@ -4,17 +4,12 @@ import {
 } from "@board-games/contracts"
 import { db, schema } from "@board-games/db"
 import { eq } from "drizzle-orm"
-import { sql } from "drizzle-orm"
 
 export async function grantAuthorization(
     userId: string,
     role: AuthorizationRole,
 ): Promise<void> {
     await db.transaction(async (tx) => {
-        if (role === authorizationRoles.administrator) {
-            await tx.execute(sql`select pg_advisory_xact_lock(824761923)`)
-        }
-
         await tx
             .insert(schema.userAuthorizations)
             .values({ userId, role })

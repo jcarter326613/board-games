@@ -87,12 +87,8 @@ export async function setupBootstrapAdministrator(
     input: CredentialsInput,
 ): Promise<IssuedSession> {
     const passwordHash = await hashPassword(input.password)
-    const refreshToken = createRefreshToken()
-    const sessionId = randomUUID()
 
-    return db.transaction(async (tx) => {
-        await tx.execute(sql`select pg_advisory_xact_lock(824761923)`)
-
+    const createdUser = await db.transaction(async (tx) => {
         const [administrator] = await tx
             .select({ userId: schema.userAuthorizations.userId })
             .from(schema.userAuthorizations)
@@ -112,7 +108,7 @@ export async function setupBootstrapAdministrator(
             )
         }
 
-        const [createdUser] = await tx
+        const [user] = await tx
             .insert(schema.users)
             .values({ displayName: input.displayName.trim() })
             .returning({
@@ -121,16 +117,36 @@ export async function setupBootstrapAdministrator(
             })
 
         await tx.insert(schema.credentials).values({
-            userId: createdUser.id,
+            userId: user.id,
             email: normalizeEmail(input.email),
             passwordHash,
         })
         await tx.insert(schema.userAuthorizations).values({
-            userId: createdUser.id,
+            userId: user.id,
             role: authorizationRoles.administrator,
         })
-        await tx.insert(schema.bootstrapAdministrators).values({
-            userId: createdUser.id,
+
+        return user
+    })
+
+    try {
+        const refreshToken = createRefreshToken()
+        const sessionId = randomUUID()
+
+        await db.transaction(async (tx) => {
+            await tx.insert(schema.bootstrapAdministrators).values({
+                userId: createdUser.id,
+            })
+
+            await tx
+                .delete(schema.refreshTokens)
+                .where(lte(schema.refreshTokens.expiresAt, new Date()))
+            await tx.insert(schema.refreshTokens).values({
+                sessionId,
+                userId: createdUser.id,
+                tokenHash: hashRefreshToken(refreshToken),
+                expiresAt: new Date(Date.now() + refreshTokenLifetimeMs),
+            })
         })
 
         const user: AuthUser = {
@@ -138,22 +154,19 @@ export async function setupBootstrapAdministrator(
             roles: [authorizationRoles.administrator],
         }
 
-        await tx
-            .delete(schema.refreshTokens)
-            .where(lte(schema.refreshTokens.expiresAt, new Date()))
-        await tx.insert(schema.refreshTokens).values({
-            sessionId,
-            userId: user.id,
-            tokenHash: hashRefreshToken(refreshToken),
-            expiresAt: new Date(Date.now() + refreshTokenLifetimeMs),
-        })
-
         return {
             user,
             accessToken: createAccessToken(user),
             refreshToken,
         }
-    })
+    } catch {
+        await db.delete(schema.users).where(eq(schema.users.id, createdUser.id))
+        throw new AppError(
+            409,
+            "setup_complete",
+            "An administrator has already been configured",
+        )
+    }
 }
 
 export async function login(
@@ -191,8 +204,6 @@ export async function login(
         const sessionId = randomUUID()
 
         return db.transaction(async (tx) => {
-            await tx.execute(sql`select pg_advisory_xact_lock(824761923)`)
-
             const [regularAdministrator] = await tx
                 .select({ userId: schema.userAuthorizations.userId })
                 .from(schema.userAuthorizations)
@@ -276,8 +287,6 @@ export async function refreshSession(rawToken: string): Promise<IssuedSession> {
     const replacementToken = createRefreshToken()
 
     return db.transaction(async (tx) => {
-        await tx.execute(sql`select pg_advisory_xact_lock(824761923)`)
-
         await tx
             .delete(schema.refreshTokens)
             .where(lte(schema.refreshTokens.expiresAt, new Date()))
