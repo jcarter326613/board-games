@@ -1,6 +1,6 @@
-import { authorizationRoles, type AuthUser } from "@board-games/contracts"
+import { type AuthUser } from "@board-games/contracts"
 import { db, schema } from "@board-games/db"
-import { and, eq, lte, ne, sql } from "drizzle-orm"
+import { eq, lte, sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 import { AppError } from "../../lib/errors.js"
 import { hashPassword, verifyPassword } from "./password.js"
@@ -68,39 +68,17 @@ async function issueSession(user: AuthUser): Promise<IssuedSession> {
     }
 }
 
-export async function getAuthStatus(): Promise<{ setupRequired: boolean }> {
-    const [administrator] = await db
-        .select({ userId: schema.userAuthorizations.userId })
-        .from(schema.userAuthorizations)
-        .where(
-            eq(
-                schema.userAuthorizations.role,
-                authorizationRoles.administrator,
-            ),
-        )
-        .limit(1)
-
-    return { setupRequired: !administrator }
-}
-
-export async function setupBootstrapAdministrator(
+export async function createAdministrator(
     input: CredentialsInput,
-): Promise<IssuedSession> {
+): Promise<AuthUser> {
     const passwordHash = await hashPassword(input.password)
 
-    const createdUser = await db.transaction(async (tx) => {
-        const [administrator] = await tx
-            .select({ userId: schema.userAuthorizations.userId })
-            .from(schema.userAuthorizations)
-            .where(
-                eq(
-                    schema.userAuthorizations.role,
-                    authorizationRoles.administrator,
-                ),
-            )
-            .limit(1)
+    return db.transaction(async (tx) => {
+        const [{ count }] = await tx
+            .select({ count: sql<string>`count(*)` })
+            .from(schema.users)
 
-        if (administrator) {
+        if (Number(count) > 0) {
             throw new AppError(
                 409,
                 "setup_complete",
@@ -123,50 +101,11 @@ export async function setupBootstrapAdministrator(
         })
         await tx.insert(schema.userAuthorizations).values({
             userId: user.id,
-            role: authorizationRoles.administrator,
+            role: "administrator",
         })
 
-        return user
+        return { ...user, roles: ["administrator" as const] }
     })
-
-    try {
-        const refreshToken = createRefreshToken()
-        const sessionId = randomUUID()
-
-        await db.transaction(async (tx) => {
-            await tx.insert(schema.bootstrapAdministrators).values({
-                userId: createdUser.id,
-            })
-
-            await tx
-                .delete(schema.refreshTokens)
-                .where(lte(schema.refreshTokens.expiresAt, new Date()))
-            await tx.insert(schema.refreshTokens).values({
-                sessionId,
-                userId: createdUser.id,
-                tokenHash: hashRefreshToken(refreshToken),
-                expiresAt: new Date(Date.now() + refreshTokenLifetimeMs),
-            })
-        })
-
-        const user: AuthUser = {
-            ...createdUser,
-            roles: [authorizationRoles.administrator],
-        }
-
-        return {
-            user,
-            accessToken: createAccessToken(user),
-            refreshToken,
-        }
-    } catch {
-        await db.delete(schema.users).where(eq(schema.users.id, createdUser.id))
-        throw new AppError(
-            409,
-            "setup_complete",
-            "An administrator has already been configured",
-        )
-    }
 }
 
 export async function login(
@@ -182,92 +121,27 @@ export async function login(
         .where(eq(schema.credentials.email, normalizeEmail(email)))
         .limit(1)
 
-    if (
-        !credential ||
-        !(await verifyPassword(password, credential.passwordHash))
-    ) {
+    const valid =
+        credential && (await verifyPassword(password, credential.passwordHash))
+
+    if (!valid) {
+        const [{ count }] = await db
+            .select({ count: sql<string>`count(*)` })
+            .from(schema.users)
+
+        if (Number(count) === 0) {
+            throw new AppError(
+                409,
+                "setup_required",
+                "No administrator has been configured",
+            )
+        }
+
         throw new AppError(
             401,
             "invalid_credentials",
             "Email or password is incorrect",
         )
-    }
-
-    const [bootstrap] = await db
-        .select({ userId: schema.bootstrapAdministrators.userId })
-        .from(schema.bootstrapAdministrators)
-        .where(eq(schema.bootstrapAdministrators.userId, credential.userId))
-        .limit(1)
-
-    if (bootstrap) {
-        const refreshToken = createRefreshToken()
-        const sessionId = randomUUID()
-
-        return db.transaction(async (tx) => {
-            const [regularAdministrator] = await tx
-                .select({ userId: schema.userAuthorizations.userId })
-                .from(schema.userAuthorizations)
-                .where(
-                    and(
-                        eq(
-                            schema.userAuthorizations.role,
-                            authorizationRoles.administrator,
-                        ),
-                        ne(schema.userAuthorizations.userId, credential.userId),
-                    ),
-                )
-                .limit(1)
-
-            if (regularAdministrator) {
-                throw new AppError(
-                    403,
-                    "bootstrap_admin_unavailable",
-                    "The bootstrap administrator is unavailable while another administrator exists",
-                )
-            }
-
-            const [bootstrapUser] = await tx
-                .select({
-                    id: schema.users.id,
-                    displayName: schema.users.displayName,
-                })
-                .from(schema.users)
-                .where(eq(schema.users.id, credential.userId))
-                .limit(1)
-            const authorizations = await tx
-                .select({ role: schema.userAuthorizations.role })
-                .from(schema.userAuthorizations)
-                .where(eq(schema.userAuthorizations.userId, credential.userId))
-
-            if (!bootstrapUser) {
-                throw new AppError(
-                    401,
-                    "invalid_credentials",
-                    "Email or password is incorrect",
-                )
-            }
-
-            const user: AuthUser = {
-                ...bootstrapUser,
-                roles: authorizations.map(({ role }) => role),
-            }
-
-            await tx
-                .delete(schema.refreshTokens)
-                .where(lte(schema.refreshTokens.expiresAt, new Date()))
-            await tx.insert(schema.refreshTokens).values({
-                sessionId,
-                userId: user.id,
-                tokenHash: hashRefreshToken(refreshToken),
-                expiresAt: new Date(Date.now() + refreshTokenLifetimeMs),
-            })
-
-            return {
-                user,
-                accessToken: createAccessToken(user),
-                refreshToken,
-            }
-        })
     }
 
     const user = await loadUser(credential.userId)

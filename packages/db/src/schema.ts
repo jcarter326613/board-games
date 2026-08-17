@@ -1,7 +1,5 @@
 import { authorizationRoles } from "@board-games/contracts"
 import {
-    boolean,
-    check,
     index,
     pgEnum,
     pgTable,
@@ -11,7 +9,6 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
 
 export const authorizationRole = pgEnum("authorization_role", [
     authorizationRoles.player,
@@ -63,26 +60,6 @@ export const userAuthorizations = pgTable(
             .notNull(),
     },
     (table) => [primaryKey({ columns: [table.userId, table.role] })],
-)
-
-export const bootstrapAdministrators = pgTable(
-    "bootstrap_administrators",
-    {
-        singleton: boolean("singleton").primaryKey().default(true),
-        userId: uuid("user_id")
-            .notNull()
-            .unique()
-            .references(() => users.id, { onDelete: "cascade" }),
-        createdAt: timestamp("created_at", { withTimezone: true })
-            .defaultNow()
-            .notNull(),
-    },
-    (table) => [
-        check(
-            "bootstrap_administrators_singleton_check",
-            sql`${table.singleton}`,
-        ),
-    ],
 )
 
 export const refreshTokens = pgTable(

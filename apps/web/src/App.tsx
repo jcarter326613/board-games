@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
-import {
-    authResponseSchema,
-    authStatusSchema,
-    type AuthUser,
-} from "@board-games/contracts"
+import { authResponseSchema, type AuthUser } from "@board-games/contracts"
 import "./App.css"
 
 type View = "loading" | "setup" | "login" | "authenticated"
@@ -11,12 +7,24 @@ type View = "loading" | "setup" | "login" | "authenticated"
 const accessTokenRefreshMs = 45_000
 const refreshRetryMs = 5_000
 
-async function errorMessage(response: Response): Promise<string> {
+async function errorDetail(response: Response): Promise<string> {
     try {
-        const problem = (await response.json()) as { detail?: string }
+        const problem = (await response.json()) as {
+            title?: string
+            detail?: string
+        }
         return problem.detail ?? "The request could not be completed."
     } catch {
         return "The request could not be completed."
+    }
+}
+
+async function errorTitle(response: Response): Promise<string | undefined> {
+    try {
+        const problem = (await response.json()) as { title?: string }
+        return problem.title
+    } catch {
+        return undefined
     }
 }
 
@@ -65,32 +73,19 @@ export function App() {
             setView("authenticated")
             scheduleRefresh()
         } catch {
-            // Retry while the current access token is still likely to be valid.
             scheduleRefresh(refreshRetryMs)
         }
     }
 
     useEffect(() => {
-        async function restoreSession() {
+        void (async () => {
             try {
-                const statusResponse = await fetch("/api/auth/status")
-                const status = authStatusSchema.parse(
-                    await statusResponse.json(),
-                )
-
-                if (status.setupRequired) {
-                    setView("setup")
-                    return
-                }
-
                 await refreshSession()
             } catch {
                 setError("Unable to connect to the authentication service.")
                 setView("login")
             }
-        }
-
-        void restoreSession()
+        })()
 
         return clearRefreshTimer
     }, [])
@@ -100,12 +95,11 @@ export function App() {
         setError(null)
         setSubmitting(true)
 
-        const endpoint =
-            view === "setup" ? "/api/auth/setup" : "/api/auth/login"
-        const body =
-            view === "setup"
-                ? { displayName, email, password }
-                : { email, password }
+        const isSetup = view === "setup"
+        const endpoint = isSetup ? "/api/auth/setup" : "/api/auth/login"
+        const body = isSetup
+            ? { displayName, email, password }
+            : { email, password }
 
         try {
             const response = await fetch(endpoint, {
@@ -115,7 +109,21 @@ export function App() {
             })
 
             if (!response.ok) {
-                setError(await errorMessage(response))
+                const title = await errorTitle(response)
+
+                if (view === "login" && title === "setup_required") {
+                    setView("setup")
+                    return
+                }
+
+                setError(await errorDetail(response))
+                return
+            }
+
+            if (isSetup) {
+                setEmail("")
+                setPassword("")
+                setView("login")
                 return
             }
 
@@ -191,7 +199,7 @@ export function App() {
                 </h1>
                 <p>
                     {isSetup
-                        ? "Create the bootstrap administrator. This account is your recovery key until another administrator is appointed."
+                        ? "Create the first administrator account."
                         : "Sign in to manage your games, cards, and tables."}
                 </p>
             </section>

@@ -31,11 +31,7 @@ export const authUserSchema = z.object({
     roles: z.array(authorizationRoleSchema),
 })
 
-export const authStatusSchema = z.object({
-    setupRequired: z.boolean(),
-})
-
-export const bootstrapSetupRequestSchema = z.object({
+export const setupRequestSchema = z.object({
     body: z.object({
         displayName: z.string().trim().min(1).max(100),
         email: z.string().trim().email().max(320),
@@ -74,7 +70,6 @@ export type GameStatus = z.infer<typeof gameStatusSchema>
 export type HealthResponse = z.infer<typeof healthResponseSchema>
 export type AuthorizationRole = z.infer<typeof authorizationRoleSchema>
 export type AuthUser = z.infer<typeof authUserSchema>
-export type AuthStatus = z.infer<typeof authStatusSchema>
 export type AuthResponse = z.infer<typeof authResponseSchema>
 export type JoinGame = z.infer<typeof joinGameSchema>
 export type JoinGameResponse = z.infer<typeof joinGameResponseSchema>

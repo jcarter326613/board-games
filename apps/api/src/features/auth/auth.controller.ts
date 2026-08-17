@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express"
-import type { AuthResponse, AuthStatus } from "@board-games/contracts"
+import type { AuthResponse } from "@board-games/contracts"
 import { AppError } from "../../lib/errors.js"
 import {
     accessCookieName,
@@ -9,28 +9,19 @@ import {
     setAuthCookies,
 } from "./cookies.js"
 import {
-    getAuthStatus,
     login,
     logout,
     refreshSession,
-    setupBootstrapAdministrator,
+    createAdministrator,
 } from "./auth.service.js"
 import { verifyAccessToken } from "./token.js"
-
-export const status: RequestHandler<
-    Record<string, string>,
-    AuthStatus
-> = async (_req, res) => {
-    res.json(await getAuthStatus())
-}
 
 export const setup: RequestHandler<
     Record<string, string>,
     AuthResponse
 > = async (_req, res) => {
-    const session = await setupBootstrapAdministrator(res.locals.input.body)
-    setAuthCookies(res, session.accessToken, session.refreshToken)
-    res.status(201).json({ user: session.user })
+    const user = await createAdministrator(res.locals.input.body)
+    res.status(201).json({ user })
 }
 
 export const logIn: RequestHandler<
