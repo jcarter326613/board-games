@@ -1,30 +1,30 @@
 {
-  "name": "@board-games/db",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+    "name": "@board-games/db",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "generate": "drizzle-kit generate",
+        "migrate": "drizzle-kit migrate",
+        "push": "drizzle-kit push"
+    },
+    "dependencies": {
+        "drizzle-orm": "^0.38.0",
+        "postgres": "^3.4.0"
+    },
+    "devDependencies": {
+        "drizzle-kit": "^0.30.0",
+        "@types/node": "^22.0.0",
+        "typescript": "^5.7.0"
     }
-  },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "push": "drizzle-kit push"
-  },
-  "dependencies": {
-    "drizzle-orm": "^0.38.0",
-    "postgres": "^3.4.0"
-  },
-  "devDependencies": {
-    "drizzle-kit": "^0.30.0",
-    "@types/node": "^22.0.0",
-    "typescript": "^5.7.0"
-  }
 }

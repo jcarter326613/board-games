@@ -1,21 +1,21 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Start web dev server",
-      "type": "shell",
-      "command": "pnpm",
-      "args": ["--filter", "@board-games/web", "dev"],
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "vite",
-        "pattern": [],
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": ".*Local:.*"
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start web dev server",
+            "type": "shell",
+            "command": "pnpm",
+            "args": ["--filter", "@board-games/web", "dev"],
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "vite",
+                "pattern": [],
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": ".*Local:.*"
+                }
+            }
         }
-      }
-    }
-  ]
+    ]
 }
