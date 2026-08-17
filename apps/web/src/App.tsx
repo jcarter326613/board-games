@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import {
     authResponseSchema,
     authStatusSchema,
@@ -7,6 +7,9 @@ import {
 import "./App.css"
 
 type View = "loading" | "setup" | "login" | "authenticated"
+
+const accessTokenRefreshMs = 45_000
+const refreshRetryMs = 5_000
 
 async function errorMessage(response: Response): Promise<string> {
     try {
@@ -25,6 +28,47 @@ export function App() {
     const [password, setPassword] = useState("")
     const [error, setError] = useState<string | null>(null)
     const [submitting, setSubmitting] = useState(false)
+    const refreshTimer = useRef<number | null>(null)
+
+    function clearRefreshTimer() {
+        if (refreshTimer.current !== null) {
+            window.clearTimeout(refreshTimer.current)
+            refreshTimer.current = null
+        }
+    }
+
+    function scheduleRefresh(delay = accessTokenRefreshMs) {
+        clearRefreshTimer()
+        refreshTimer.current = window.setTimeout(() => {
+            void refreshSession()
+        }, delay)
+    }
+
+    async function refreshSession() {
+        try {
+            const response = await fetch("/api/auth/refresh", {
+                method: "POST",
+            })
+
+            if (!response.ok) {
+                clearRefreshTimer()
+                setUser(null)
+                setView("login")
+                return
+            }
+
+            const { user: currentUser } = authResponseSchema.parse(
+                await response.json(),
+            )
+            setError(null)
+            setUser(currentUser)
+            setView("authenticated")
+            scheduleRefresh()
+        } catch {
+            // Retry while the current access token is still likely to be valid.
+            scheduleRefresh(refreshRetryMs)
+        }
+    }
 
     useEffect(() => {
         async function restoreSession() {
@@ -39,29 +83,7 @@ export function App() {
                     return
                 }
 
-                const meResponse = await fetch("/api/auth/me")
-                if (meResponse.ok) {
-                    const { user: currentUser } = authResponseSchema.parse(
-                        await meResponse.json(),
-                    )
-                    setUser(currentUser)
-                    setView("authenticated")
-                    return
-                }
-
-                const refreshResponse = await fetch("/api/auth/refresh", {
-                    method: "POST",
-                })
-                if (!refreshResponse.ok) {
-                    setView("login")
-                    return
-                }
-
-                const { user: currentUser } = authResponseSchema.parse(
-                    await refreshResponse.json(),
-                )
-                setUser(currentUser)
-                setView("authenticated")
+                await refreshSession()
             } catch {
                 setError("Unable to connect to the authentication service.")
                 setView("login")
@@ -69,6 +91,8 @@ export function App() {
         }
 
         void restoreSession()
+
+        return clearRefreshTimer
     }, [])
 
     async function submitCredentials(event: FormEvent<HTMLFormElement>) {
@@ -99,6 +123,7 @@ export function App() {
             setUser(auth.user)
             setPassword("")
             setView("authenticated")
+            scheduleRefresh()
         } catch {
             setError("Unable to connect to the authentication service.")
         } finally {
@@ -107,6 +132,7 @@ export function App() {
     }
 
     async function logOut() {
+        clearRefreshTimer()
         setSubmitting(true)
         try {
             await fetch("/api/auth/logout", { method: "POST" })
