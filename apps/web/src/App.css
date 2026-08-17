@@ -1,0 +1,268 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap");
+
+:root {
+    color: #222018;
+    background: #e9e3d3;
+    font-family: "Manrope", sans-serif;
+    font-synthesis: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.loading {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    font-family: "DM Mono", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.auth-layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
+}
+
+.auth-intro {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    padding: clamp(3rem, 8vw, 8rem);
+    color: #f5efdf;
+    background: #31372c;
+}
+
+.auth-intro::before {
+    content: "";
+    position: absolute;
+    width: 34rem;
+    height: 34rem;
+    top: -12rem;
+    right: -8rem;
+    border: 1px solid rgb(245 239 223 / 24%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 5rem rgb(245 239 223 / 4%),
+        0 0 0 10rem rgb(245 239 223 / 3%);
+}
+
+.auth-intro h1,
+.welcome h1 {
+    max-width: 10ch;
+    margin: 0 0 1.5rem;
+    font-size: clamp(3.2rem, 7vw, 7.5rem);
+    line-height: 0.94;
+    letter-spacing: -0.07em;
+}
+
+.auth-intro > p:last-child {
+    max-width: 38rem;
+    margin: 0;
+    color: #c6c9b8;
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.eyebrow,
+.form-heading span {
+    font-family: "DM Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.eyebrow {
+    margin: 0 0 2rem;
+    color: #d47745;
+}
+
+.auth-panel {
+    display: grid;
+    place-items: center;
+    padding: clamp(2rem, 7vw, 7rem);
+    background-image:
+        linear-gradient(rgb(49 55 44 / 7%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(49 55 44 / 7%) 1px, transparent 1px);
+    background-size: 32px 32px;
+}
+
+form {
+    width: min(100%, 30rem);
+    padding: clamp(2rem, 5vw, 4rem);
+    background: #f8f4e8;
+    border: 1px solid #bcb5a3;
+    box-shadow: 12px 12px 0 #d47745;
+}
+
+.form-heading {
+    margin-bottom: 2.5rem;
+}
+
+.form-heading span {
+    color: #787464;
+}
+
+.form-heading h2 {
+    margin: 0.5rem 0 0;
+    font-size: 1.8rem;
+}
+
+label {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 1.25rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+input {
+    width: 100%;
+    padding: 0.9rem 0;
+    color: #222018;
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid #817c6c;
+    border-radius: 0;
+    outline: none;
+    text-transform: none;
+}
+
+input:focus {
+    border-color: #d47745;
+}
+
+small {
+    color: #787464;
+    font-weight: 400;
+    text-transform: none;
+}
+
+.form-error {
+    margin: 1.5rem 0 0;
+    color: #9c3328;
+    line-height: 1.5;
+}
+
+.primary-button {
+    width: 100%;
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    color: #f8f4e8;
+    background: #31372c;
+    border: 0;
+    font-weight: 700;
+}
+
+.primary-button:hover:not(:disabled) {
+    background: #d47745;
+}
+
+button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.shell {
+    min-height: 100vh;
+    background: #e9e3d3;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem clamp(1.5rem, 5vw, 5rem);
+    border-bottom: 1px solid #bcb5a3;
+}
+
+.brand {
+    color: inherit;
+    font-family: "DM Mono", monospace;
+    font-weight: 500;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.text-button {
+    padding: 0;
+    color: #5d5a4e;
+    background: transparent;
+    border: 0;
+    text-decoration: underline;
+}
+
+.welcome {
+    padding: clamp(5rem, 13vw, 12rem) clamp(1.5rem, 10vw, 10rem);
+}
+
+.welcome h1 {
+    max-width: 12ch;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+}
+
+.lede {
+    max-width: 42rem;
+    color: #686456;
+    font-size: 1.15rem;
+    line-height: 1.7;
+}
+
+.role-list {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.role-list span {
+    padding: 0.55rem 0.8rem;
+    color: #f8f4e8;
+    background: #31372c;
+    font-family: "DM Mono", monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+@media (max-width: 800px) {
+    .auth-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-intro {
+        min-height: 43vh;
+        padding: 3rem 1.5rem;
+    }
+
+    .auth-intro h1 {
+        font-size: clamp(3rem, 15vw, 5rem);
+    }
+
+    .auth-panel {
+        padding: 3rem 1.5rem 5rem;
+    }
+
+    form {
+        box-shadow: 8px 8px 0 #d47745;
+    }
+}

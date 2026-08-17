@@ -1,42 +1,273 @@
-import { useEffect, useState } from "react"
-import { io } from "socket.io-client"
-import { healthResponseSchema } from "@board-games/contracts"
+import { useEffect, useRef, useState, type FormEvent } from "react"
+import { authResponseSchema, type AuthUser } from "@board-games/contracts"
+import "./App.css"
 
-const socket = io({ autoConnect: false })
+type View = "loading" | "setup" | "login" | "authenticated"
+
+const accessTokenRefreshMs = 45_000
+const refreshRetryMs = 5_000
+
+async function errorDetail(response: Response): Promise<string> {
+    try {
+        const problem = (await response.json()) as {
+            title?: string
+            detail?: string
+        }
+        return problem.detail ?? "The request could not be completed."
+    } catch {
+        return "The request could not be completed."
+    }
+}
+
+async function errorTitle(response: Response): Promise<string | undefined> {
+    try {
+        const problem = (await response.json()) as { title?: string }
+        return problem.title
+    } catch {
+        return undefined
+    }
+}
 
 export function App() {
-    const [health, setHealth] = useState<string | null>(null)
+    const [view, setView] = useState<View>("loading")
+    const [user, setUser] = useState<AuthUser | null>(null)
+    const [displayName, setDisplayName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState<string | null>(null)
+    const [submitting, setSubmitting] = useState(false)
+    const refreshTimer = useRef<number | null>(null)
 
-    useEffect(() => {
-        async function checkHealth() {
-            try {
-                const response = await fetch("/api/health")
-                const data = healthResponseSchema.parse(await response.json())
-                setHealth(data.status)
-            } catch {
-                setHealth("error")
+    function clearRefreshTimer() {
+        if (refreshTimer.current !== null) {
+            window.clearTimeout(refreshTimer.current)
+            refreshTimer.current = null
+        }
+    }
+
+    function scheduleRefresh(delay = accessTokenRefreshMs) {
+        clearRefreshTimer()
+        refreshTimer.current = window.setTimeout(() => {
+            void refreshSession()
+        }, delay)
+    }
+
+    async function refreshSession() {
+        try {
+            const response = await fetch("/api/auth/refresh", {
+                method: "POST",
+            })
+
+            if (!response.ok) {
+                clearRefreshTimer()
+                setUser(null)
+                setView("login")
+                return
             }
-        }
 
-        void checkHealth()
-    }, [])
+            const { user: currentUser } = authResponseSchema.parse(
+                await response.json(),
+            )
+            setError(null)
+            setUser(currentUser)
+            setView("authenticated")
+            scheduleRefresh()
+        } catch {
+            scheduleRefresh(refreshRetryMs)
+        }
+    }
 
     useEffect(() => {
-        socket.connect()
-        socket.on("connect", () => {
-            console.log("Connected to server:", socket.id)
-        })
+        void (async () => {
+            try {
+                await refreshSession()
+            } catch {
+                setError("Unable to connect to the authentication service.")
+                setView("login")
+            }
+        })()
 
-        return () => {
-            socket.off("connect")
-            socket.disconnect()
-        }
+        return clearRefreshTimer
     }, [])
+
+    async function submitCredentials(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault()
+        setError(null)
+        setSubmitting(true)
+
+        const isSetup = view === "setup"
+        const endpoint = isSetup ? "/api/auth/setup" : "/api/auth/login"
+        const body = isSetup
+            ? { displayName, email, password }
+            : { email, password }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(body),
+            })
+
+            if (!response.ok) {
+                const title = await errorTitle(response)
+
+                if (view === "login" && title === "setup_required") {
+                    setView("setup")
+                    return
+                }
+
+                setError(await errorDetail(response))
+                return
+            }
+
+            if (isSetup) {
+                setEmail("")
+                setPassword("")
+                setView("login")
+                return
+            }
+
+            const auth = authResponseSchema.parse(await response.json())
+            setUser(auth.user)
+            setPassword("")
+            setView("authenticated")
+            scheduleRefresh()
+        } catch {
+            setError("Unable to connect to the authentication service.")
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    async function logOut() {
+        clearRefreshTimer()
+        setSubmitting(true)
+        try {
+            await fetch("/api/auth/logout", { method: "POST" })
+        } finally {
+            setUser(null)
+            setPassword("")
+            setSubmitting(false)
+            setView("login")
+        }
+    }
+
+    if (view === "loading") {
+        return <main className="loading">Preparing the table...</main>
+    }
+
+    if (view === "authenticated" && user) {
+        return (
+            <main className="shell">
+                <header className="topbar">
+                    <a className="brand" href="/">
+                        Foundry Table
+                    </a>
+                    <button
+                        className="text-button"
+                        onClick={logOut}
+                        disabled={submitting}
+                    >
+                        Sign out
+                    </button>
+                </header>
+                <section className="welcome">
+                    <p className="eyebrow">Workshop access granted</p>
+                    <h1>Welcome, {user.displayName}</h1>
+                    <p className="lede">
+                        Your account is ready. Card construction and game tables
+                        will grow from this foundation.
+                    </p>
+                    <div className="role-list" aria-label="Account roles">
+                        {user.roles.map((role) => (
+                            <span key={role}>{role}</span>
+                        ))}
+                    </div>
+                </section>
+            </main>
+        )
+    }
+
+    const isSetup = view === "setup"
 
     return (
-        <div>
-            <h1>Board Games</h1>
-            <p>API Status: {health ?? "loading..."}</p>
-        </div>
+        <main className="auth-layout">
+            <section className="auth-intro">
+                <p className="eyebrow">Foundry Table</p>
+                <h1>
+                    {isSetup ? "Open the workshop." : "Return to the workshop."}
+                </h1>
+                <p>
+                    {isSetup
+                        ? "Create the first administrator account."
+                        : "Sign in to manage your games, cards, and tables."}
+                </p>
+            </section>
+            <section className="auth-panel">
+                <form onSubmit={submitCredentials}>
+                    <div className="form-heading">
+                        <span>
+                            {isSetup ? "01 / First run" : "Account access"}
+                        </span>
+                        <h2>{isSetup ? "Create administrator" : "Sign in"}</h2>
+                    </div>
+                    {isSetup && (
+                        <label>
+                            Display name
+                            <input
+                                name="displayName"
+                                autoComplete="name"
+                                value={displayName}
+                                onChange={(event) =>
+                                    setDisplayName(event.target.value)
+                                }
+                                required
+                                maxLength={100}
+                            />
+                        </label>
+                    )}
+                    <label>
+                        Email address
+                        <input
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            required
+                        />
+                    </label>
+                    <label>
+                        Password
+                        <input
+                            name="password"
+                            type="password"
+                            autoComplete={
+                                isSetup ? "new-password" : "current-password"
+                            }
+                            value={password}
+                            onChange={(event) =>
+                                setPassword(event.target.value)
+                            }
+                            required
+                            minLength={isSetup ? 12 : 1}
+                        />
+                        {isSetup && <small>Use at least 12 characters.</small>}
+                    </label>
+                    {error && <p className="form-error">{error}</p>}
+                    <button
+                        className="primary-button"
+                        type="submit"
+                        disabled={submitting}
+                    >
+                        {submitting
+                            ? "Working..."
+                            : isSetup
+                              ? "Create workshop"
+                              : "Enter workshop"}
+                    </button>
+                </form>
+            </section>
+        </main>
     )
 }

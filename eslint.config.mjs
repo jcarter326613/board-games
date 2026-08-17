@@ -16,6 +16,13 @@ export default [
             parser: typescriptEslintParser,
             parserOptions: {
                 sourceType: "module",
+                projectService: {
+                    allowDefaultProject: [
+                        "apps/web/vite.config.ts",
+                        "packages/db/drizzle.config.ts",
+                    ],
+                },
+                tsconfigRootDir: import.meta.dirname,
             },
         },
         plugins: {
@@ -28,6 +35,7 @@ export default [
                 "warn",
                 { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
             ],
+            "@typescript-eslint/no-floating-promises": "error",
         },
     },
 ]
