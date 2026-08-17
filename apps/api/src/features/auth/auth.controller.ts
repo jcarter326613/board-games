@@ -1,4 +1,5 @@
 import type { RequestHandler } from "express"
+import type { AuthResponse, AuthStatus } from "@board-games/contracts"
 import { AppError } from "../../lib/errors.js"
 import {
     accessCookieName,
@@ -16,24 +17,36 @@ import {
 } from "./auth.service.js"
 import { verifyAccessToken } from "./token.js"
 
-export const status: RequestHandler = async (_req, res) => {
+export const status: RequestHandler<
+    Record<string, string>,
+    AuthStatus
+> = async (_req, res) => {
     res.json(await getAuthStatus())
 }
 
-export const setup: RequestHandler = async (_req, res) => {
+export const setup: RequestHandler<
+    Record<string, string>,
+    AuthResponse
+> = async (_req, res) => {
     const session = await setupBootstrapAdministrator(res.locals.input.body)
     setAuthCookies(res, session.accessToken, session.refreshToken)
     res.status(201).json({ user: session.user })
 }
 
-export const logIn: RequestHandler = async (_req, res) => {
+export const logIn: RequestHandler<
+    Record<string, string>,
+    AuthResponse
+> = async (_req, res) => {
     const { email, password } = res.locals.input.body
     const session = await login(email, password)
     setAuthCookies(res, session.accessToken, session.refreshToken)
     res.json({ user: session.user })
 }
 
-export const refresh: RequestHandler = async (req, res) => {
+export const refresh: RequestHandler<
+    Record<string, string>,
+    AuthResponse
+> = async (req, res) => {
     const refreshToken = getCookie(req, refreshCookieName)
     if (!refreshToken) {
         throw new AppError(
@@ -48,13 +61,19 @@ export const refresh: RequestHandler = async (req, res) => {
     res.json({ user: session.user })
 }
 
-export const logOut: RequestHandler = async (req, res) => {
+export const logOut: RequestHandler<Record<string, string>, void> = async (
+    req,
+    res,
+) => {
     await logout(getCookie(req, refreshCookieName))
     clearAuthCookies(res)
     res.status(204).end()
 }
 
-export const me: RequestHandler = (req, res) => {
+export const me: RequestHandler<Record<string, string>, AuthResponse> = (
+    req,
+    res,
+) => {
     const token = getCookie(req, accessCookieName)
     const user = token ? verifyAccessToken(token) : null
 
