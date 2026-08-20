@@ -1,0 +1,48 @@
+name: Terraform Apply
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: Deployment environment
+                required: true
+                type: choice
+                options:
+                    - development
+                    - production
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    apply:
+        name: Apply ${{ inputs.environment }}
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        concurrency:
+            group: terraform-${{ inputs.environment }}
+            cancel-in-progress: false
+        env:
+            TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
+        defaults:
+            run:
+                working-directory: infrastructure/environments/${{ inputs.environment }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: google-github-actions/auth@v2
+              with:
+                  workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+                  service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+            - uses: hashicorp/setup-terraform@v3
+
+            - name: Initialize remote state
+              run: terraform init -backend-config=backend.hcl -input=false
+
+            - name: Create execution plan
+              run: terraform plan -input=false -out=tfplan
+
+            - name: Apply execution plan
+              run: terraform apply -input=false tfplan
