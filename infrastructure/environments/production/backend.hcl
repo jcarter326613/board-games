@@ -1,6 +1,2 @@
-terraform {
-    backend "gcs" {
-        bucket = "experimentation-506112-terraform-state"
-        prefix = "board-games-production"
-    }
-}
+bucket = "experimentation-506112-terraform-state"
+prefix = "board-games-production"
