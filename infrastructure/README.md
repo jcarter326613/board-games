@@ -4,6 +4,8 @@ Terraform root modules are separated by deployment environment:
 
 - `environments/development` manages the development deployment.
 - `environments/production` manages the production deployment.
+- `bootstrap` is applied manually by a project administrator to configure
+  GitHub OIDC and deployment permissions.
 - `modules` will contain reusable GCP infrastructure modules as services are added.
 
 ## Remote state

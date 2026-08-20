@@ -1,0 +1,8 @@
+project_id                     = "experimentation-506112"
+state_bucket_name              = "experimentation-506112-terraform-state"
+github_repository              = "jcarter326613/board-games"
+
+# Add only the roles needed by the resources managed in the environment roots.
+terraform_project_roles = [
+   # Add roles here for what is needed to complete the deployments,
+]
