@@ -31,10 +31,15 @@ service is used by HTTP controllers and Socket.IO event handlers.
 shared by API and client code. Do not use TypeScript interfaces alone to trust
 HTTP or Socket.IO input.
 
-On a new database, the web app presents a one-time setup form for the first
-administrator. The account can log in only while no regular administrator
-exists. Access tokens last one minute; rotating refresh tokens last 30 days and
-use a 30-second grace window for concurrent browser requests.
+Deck definitions are managed by administrators at `/admin/deck-types`. A deck
+owns its future cards and can recursively include other independent decks,
+without copying their cards. Circular inclusions are rejected, and a deck
+cannot be deleted while another deck includes it.
+
+On a new database, the web app presents a setup form for the first
+administrator. Setup is available only while no users exist. Access tokens last
+one minute; rotating refresh tokens last 30 days and use a 30-second grace
+window for concurrent browser requests.
 
 Set `ACCESS_TOKEN_SECRET` to a random value of at least 32 characters before
 starting the API. For example: `openssl rand -base64 48`.

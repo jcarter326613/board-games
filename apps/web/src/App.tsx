@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { authResponseSchema, type AuthUser } from "@board-games/contracts"
+import { AuthenticatedApp } from "./AuthenticatedApp"
 import "./App.css"
 
 type View = "loading" | "setup" | "login" | "authenticated"
@@ -7,24 +8,17 @@ type View = "loading" | "setup" | "login" | "authenticated"
 const accessTokenRefreshMs = 45_000
 const refreshRetryMs = 5_000
 
-async function errorDetail(response: Response): Promise<string> {
+async function errorProblem(response: Response): Promise<{
+    title?: string
+    detail?: string
+}> {
     try {
-        const problem = (await response.json()) as {
+        return (await response.json()) as {
             title?: string
             detail?: string
         }
-        return problem.detail ?? "The request could not be completed."
     } catch {
-        return "The request could not be completed."
-    }
-}
-
-async function errorTitle(response: Response): Promise<string | undefined> {
-    try {
-        const problem = (await response.json()) as { title?: string }
-        return problem.title
-    } catch {
-        return undefined
+        return {}
     }
 }
 
@@ -109,14 +103,16 @@ export function App() {
             })
 
             if (!response.ok) {
-                const title = await errorTitle(response)
+                const problem = await errorProblem(response)
 
-                if (view === "login" && title === "setup_required") {
+                if (view === "login" && problem.title === "setup_required") {
                     setView("setup")
                     return
                 }
 
-                setError(await errorDetail(response))
+                setError(
+                    problem.detail ?? "The request could not be completed.",
+                )
                 return
             }
 
@@ -158,33 +154,11 @@ export function App() {
 
     if (view === "authenticated" && user) {
         return (
-            <main className="shell">
-                <header className="topbar">
-                    <a className="brand" href="/">
-                        Foundry Table
-                    </a>
-                    <button
-                        className="text-button"
-                        onClick={logOut}
-                        disabled={submitting}
-                    >
-                        Sign out
-                    </button>
-                </header>
-                <section className="welcome">
-                    <p className="eyebrow">Workshop access granted</p>
-                    <h1>Welcome, {user.displayName}</h1>
-                    <p className="lede">
-                        Your account is ready. Card construction and game tables
-                        will grow from this foundation.
-                    </p>
-                    <div className="role-list" aria-label="Account roles">
-                        {user.roles.map((role) => (
-                            <span key={role}>{role}</span>
-                        ))}
-                    </div>
-                </section>
-            </main>
+            <AuthenticatedApp
+                onLogout={logOut}
+                submitting={submitting}
+                user={user}
+            />
         )
     }
 

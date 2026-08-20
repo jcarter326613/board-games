@@ -1,14 +1,17 @@
 import { authorizationRoles } from "@board-games/contracts"
 import {
+    check,
     index,
     pgEnum,
     pgTable,
     primaryKey,
+    text,
     timestamp,
     uniqueIndex,
     uuid,
     varchar,
 } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
 
 export const authorizationRole = pgEnum("authorization_role", [
     authorizationRoles.player,
@@ -81,6 +84,47 @@ export const refreshTokens = pgTable(
         index("refresh_tokens_session_id_idx").on(table.sessionId),
         index("refresh_tokens_user_id_idx").on(table.userId),
         index("refresh_tokens_expires_at_idx").on(table.expiresAt),
+    ],
+)
+
+export const deckTypes = pgTable(
+    "deck_types",
+    {
+        id: uuid("id").defaultRandom().primaryKey(),
+        name: varchar("name", { length: 255 }).notNull(),
+        description: text("description"),
+        createdAt: timestamp("created_at", { withTimezone: true })
+            .defaultNow()
+            .notNull(),
+        updatedAt: timestamp("updated_at", { withTimezone: true })
+            .defaultNow()
+            .notNull(),
+    },
+    (table) => [uniqueIndex("deck_types_name_unique").on(table.name)],
+)
+
+export const deckTypeInclusions = pgTable(
+    "deck_type_inclusions",
+    {
+        deckTypeId: uuid("deck_type_id")
+            .notNull()
+            .references(() => deckTypes.id, { onDelete: "cascade" }),
+        includedDeckTypeId: uuid("included_deck_type_id")
+            .notNull()
+            .references(() => deckTypes.id, { onDelete: "restrict" }),
+        createdAt: timestamp("created_at", { withTimezone: true })
+            .defaultNow()
+            .notNull(),
+    },
+    (table) => [
+        primaryKey({ columns: [table.deckTypeId, table.includedDeckTypeId] }),
+        check(
+            "deck_type_inclusions_distinct_check",
+            sql`${table.deckTypeId} <> ${table.includedDeckTypeId}`,
+        ),
+        index("deck_type_inclusions_included_deck_type_id_idx").on(
+            table.includedDeckTypeId,
+        ),
     ],
 )
 

@@ -106,7 +106,7 @@ button {
     background-size: 32px 32px;
 }
 
-form {
+.auth-panel form {
     width: min(100%, 30rem);
     padding: clamp(2rem, 5vw, 4rem);
     background: #f8f4e8;
@@ -127,7 +127,7 @@ form {
     font-size: 1.8rem;
 }
 
-label {
+.auth-panel label {
     display: grid;
     gap: 0.55rem;
     margin-top: 1.25rem;
@@ -137,7 +137,7 @@ label {
     text-transform: uppercase;
 }
 
-input {
+.auth-panel input {
     width: 100%;
     padding: 0.9rem 0;
     color: #222018;
@@ -149,11 +149,11 @@ input {
     text-transform: none;
 }
 
-input:focus {
+.auth-panel input:focus {
     border-color: #d47745;
 }
 
-small {
+.auth-panel small {
     color: #787464;
     font-weight: 400;
     text-transform: none;
@@ -244,6 +244,300 @@ button:disabled {
     text-transform: uppercase;
 }
 
+.primary-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.primary-nav a {
+    color: #5d5a4e;
+    font-family: "DM Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.primary-nav a.active {
+    color: #d47745;
+}
+
+.primary-link,
+.secondary-button,
+.danger-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.85rem;
+    padding: 0.75rem 1rem;
+    border: 0;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.primary-link {
+    color: #f8f4e8;
+    background: #31372c;
+}
+
+.primary-link:hover,
+.primary-link:focus-visible {
+    background: #d47745;
+}
+
+.welcome-action {
+    width: fit-content;
+    margin-top: 2rem;
+}
+
+.admin-page {
+    width: min(100%, 82rem);
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 7rem) clamp(1.5rem, 5vw, 5rem);
+}
+
+.narrow-page {
+    width: min(100%, 48rem);
+    margin-left: max(0rem, calc((100% - 82rem) / 2));
+}
+
+.page-heading,
+.editor-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.page-heading h1,
+.editor-heading h1,
+.admin-page > h1 {
+    max-width: 14ch;
+    margin: 0.5rem 0 1rem;
+    font-size: clamp(2.8rem, 6vw, 5.5rem);
+    letter-spacing: -0.06em;
+    line-height: 0.95;
+}
+
+.page-heading p:not(.eyebrow),
+.page-copy,
+.editor-panel > p {
+    max-width: 42rem;
+    color: #686456;
+    line-height: 1.7;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 2.5rem;
+    color: #5d5a4e;
+    font-family: "DM Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.back-link::before {
+    content: "← ";
+}
+
+.status-message,
+.muted-copy {
+    color: #686456;
+    line-height: 1.6;
+}
+
+.empty-state,
+.editor-panel {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background: #f8f4e8;
+    border: 1px solid #bcb5a3;
+}
+
+.empty-state {
+    max-width: 40rem;
+    box-shadow: 10px 10px 0 #d47745;
+}
+
+.empty-state h2,
+.editor-panel h2 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+}
+
+.empty-state p:not(.eyebrow) {
+    margin: 0 0 1.75rem;
+    color: #686456;
+    line-height: 1.6;
+}
+
+.deck-list {
+    display: grid;
+    gap: 1px;
+    border: 1px solid #bcb5a3;
+    background: #bcb5a3;
+}
+
+.deck-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    color: inherit;
+    background: #f8f4e8;
+    text-decoration: none;
+}
+
+.deck-list-item:hover {
+    background: #f1e6d0;
+}
+
+.deck-list-item span:first-child {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.deck-list-item strong {
+    font-size: 1.1rem;
+}
+
+.deck-list-item small {
+    color: #686456;
+    font-size: 0.9rem;
+}
+
+.deck-list-item span:last-child {
+    color: #d47745;
+    font-family: "DM Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.editor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.editor-panel {
+    min-width: 0;
+}
+
+.editor-form {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.editor-form label,
+.card-type-placeholder label {
+    display: grid;
+    gap: 0.55rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.editor-form label span {
+    color: #787464;
+    font-weight: 400;
+}
+
+.editor-form input,
+.editor-form textarea,
+.include-controls select,
+.card-type-placeholder select {
+    width: 100%;
+    padding: 0.8rem;
+    color: #222018;
+    background: #fffdf7;
+    border: 1px solid #bcb5a3;
+    border-radius: 0;
+    font: inherit;
+}
+
+.editor-form textarea {
+    resize: vertical;
+}
+
+.editor-form input:focus,
+.editor-form textarea:focus,
+.include-controls select:focus {
+    outline: 2px solid #d47745;
+    outline-offset: 2px;
+}
+
+.editor-form .primary-button {
+    margin-top: 0.5rem;
+}
+
+.include-controls {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.secondary-button {
+    flex: 0 0 auto;
+    color: #31372c;
+    background: #e9e3d3;
+    border: 1px solid #817c6c;
+}
+
+.secondary-button:hover:not(:disabled) {
+    border-color: #d47745;
+    color: #d47745;
+}
+
+.deck-reference-list {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.deck-reference-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #d8d0bf;
+}
+
+.deck-reference-list a {
+    color: inherit;
+    font-weight: 700;
+}
+
+.danger-panel {
+    background: #f4e1d9;
+    border-color: #c77967;
+}
+
+.danger-button {
+    color: #f8f4e8;
+    background: #9c3328;
+}
+
+.danger-button:hover:not(:disabled) {
+    background: #74271f;
+}
+
+.card-type-placeholder {
+    margin-top: 2rem;
+}
+
+.card-type-placeholder select:disabled {
+    color: #787464;
+    background: #ece7db;
+}
+
 @media (max-width: 800px) {
     .auth-layout {
         grid-template-columns: 1fr;
@@ -262,7 +556,35 @@ button:disabled {
         padding: 3rem 1.5rem 5rem;
     }
 
-    form {
+    .auth-panel form {
         box-shadow: 8px 8px 0 #d47745;
+    }
+
+    .topbar,
+    .page-heading,
+    .editor-heading,
+    .include-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .topbar {
+        gap: 1rem;
+    }
+
+    .primary-nav {
+        justify-content: space-between;
+    }
+
+    .admin-page {
+        padding-top: 3rem;
+    }
+
+    .narrow-page {
+        margin-left: auto;
+    }
+
+    .editor-grid {
+        grid-template-columns: 1fr;
     }
 }
